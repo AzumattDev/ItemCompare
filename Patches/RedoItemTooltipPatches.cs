@@ -16,47 +16,44 @@ static class InventoryGridCreateItemTooltipPatch
     [HarmonyAfter("org.bepinex.plugins.jewelcrafting")]
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
-        // Ensure the cloned tooltip is destroyed if it already exists (to handle dynamic updates)
         if (clonedTooltip != null)
         {
-            //ItemComparePlugin.ItemCompareLogger.LogInfo("InventoryGrid.CreateItemTooltip: Cloned tooltip exists, destroying it");
             Object.Destroy(clonedTooltip);
             clonedTooltip = null;
         }
 
-        ItemComparePlugin.ItemCompareLogger.LogInfo($"InventoryGrid.CreateItemTooltip: {item.m_shared.m_name}");
-        // Clone the tooltip prefab
         GameObject originalPrefab = tooltip.m_tooltipPrefab;
         clonedTooltip = Object.Instantiate(originalPrefab, tooltip.transform.parent);
 
+
         RectTransform originalRT = tooltip.GetComponent<RectTransform>();
         RectTransform clonedRT = clonedTooltip.GetComponent<RectTransform>();
+        // After cloning the tooltip and setting it up
+        TooltipFollower follower = clonedTooltip.AddComponent<TooltipFollower>();
+        follower.target = originalRT; // Assuming originalRT is the RectTransform of the original tooltip
+        follower.offset = new Vector2(originalRT.rect.width + 50, 0); // Customize this offset as needed
 
-
-        Vector2 offset = new Vector2(originalRT.rect.width + 50, 0);
+        /*Vector2 offset = new Vector2(originalRT.rect.width + 50, 0);
         clonedRT.anchoredPosition = originalRT.anchoredPosition + offset;
+
+        // The cloned tooltip is always behind the original and isn't to the right of the original. This is likely due to the fact the original can move around
+        // Fix it
+        clonedRT.position = originalRT.position + new Vector3(offset.x, -offset.y, 0);*/
 
 
         clonedRT.sizeDelta = originalRT.sizeDelta;
         clonedRT.anchorMin = originalRT.anchorMin;
         clonedRT.anchorMax = originalRT.anchorMax;
 
-
-        // Clamp the cloned tooltip to the screen
         Utils.ClampUIToScreen(clonedRT);
 
-        // Log the location of the tooltip
-        ItemComparePlugin.ItemCompareLogger.LogInfo($"InventoryGrid.CreateItemTooltip: Cloned tooltip position: {clonedRT.position}");
-
-        // Update the cloned tooltip's text with comparison data
         UpdateClonedTooltipText(clonedTooltip, item);
     }
 
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
-        ItemComparePlugin.ItemCompareLogger.LogInfo($"UpdateClonedTooltipText: {hoveredItem.m_shared.m_name}");
         string comparisonText = GenerateComparisonText(hoveredItem);
-        string comparisonTopic = FindEquippedItemMatching(hoveredItem)?.m_shared.m_name + " (Equipped)";
+        string comparisonTopic = Localization.instance.Localize(FindEquippedItemMatching(hoveredItem)?.m_shared.m_name) + " (Equipped)";
 
         // Find and update the "Text" component with comparison data
         Transform textTransform = Utils.FindChild(clonedTooltip.transform, "Text");
@@ -91,10 +88,7 @@ static class InventoryGridCreateItemTooltipPatch
         //if (equippedItem != null && ItemComparePlugin.HoverKeybind.Value.IsKeyHeld())
         if (equippedItem != null)
         {
-            // Durability comparison
             AddDurabilityComparison(hoveredItem, equippedItem, comparisonText);
-
-            // Weight comparison
             AddWeightComparison(hoveredItem, equippedItem, comparisonText);
             AddDamageComparison(hoveredItem, equippedItem, comparisonText, player);
             AddArmorComparison(hoveredItem, equippedItem, comparisonText);
@@ -102,7 +96,6 @@ static class InventoryGridCreateItemTooltipPatch
             AddOtherStatComparison(hoveredItem, equippedItem, comparisonText);
         }
 
-        ItemComparePlugin.ItemCompareLogger.LogInfo($"GeneratedComparisonText: {comparisonText.ToString()}");
         return comparisonText.ToString();
     }
 
@@ -118,7 +111,7 @@ static class InventoryGridCreateItemTooltipPatch
         float equippedDurability = equippedItem.GetMaxDurability();
         float difference = hoveredDurability - equippedDurability;
 
-        comparisonText.AppendLine($"Durability: {hoveredDurability} vs. {equippedDurability} ({(difference >= 0 ? "<color==#FF0000>" : "<color==#FF0000>")}{difference}</color>)");
+        comparisonText.AppendLine($"Durability: {hoveredDurability} vs. {equippedDurability} ({(difference >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{difference}</color>)");
     }
 
     private static void AddDamageComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText, Player player)
@@ -205,7 +198,7 @@ static class UITooltipOnHoverStartPatch
         // Check if the cloned tooltip exists and make it active
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
         {
-            ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnHoverStart: Cloned tooltip exists, making it active");
+            // ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnHoverStart: Cloned tooltip exists, making it active");
             InventoryGridCreateItemTooltipPatch.clonedTooltip.SetActive(true);
         }
     }
@@ -219,7 +212,7 @@ public static class UITooltipOnPointerExitPatch
         // Destroy the cloned tooltip when the pointer exits the original tooltip
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
         {
-            ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
+            //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
             Object.Destroy(InventoryGridCreateItemTooltipPatch.clonedTooltip);
             InventoryGridCreateItemTooltipPatch.clonedTooltip = null;
         }
