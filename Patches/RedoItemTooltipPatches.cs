@@ -1,13 +1,15 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Object = UnityEngine.Object;
 
 namespace ItemCompare.Patches;
 
-// Not the best approach, but since my other attempts have failed, I say fuck it. Try anyways.
+// Not the best approach, but since my other attempts have failed, I say fuck it.
 [HarmonyPatch(typeof(InventoryGrid), nameof(InventoryGrid.CreateItemTooltip))]
 static class InventoryGridCreateItemTooltipPatch
 {
@@ -24,6 +26,8 @@ static class InventoryGridCreateItemTooltipPatch
             // No matching equipped item, do not create/update cloned tooltip
             return;
         }
+
+        if (equippedItem == item) return;
 
         if (clonedTooltip != null)
         {
@@ -48,7 +52,7 @@ static class InventoryGridCreateItemTooltipPatch
 
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
-        string comparisonText = GenerateComparisonText(hoveredItem);
+        string comparisonText = $"{Environment.NewLine}Equipping {hoveredItem.m_shared.m_name} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
         string comparisonTopic = Localization.instance.Localize(FindEquippedItemMatching(hoveredItem)?.m_shared.m_name) + " (Equipped)";
 
         // Find and update the "Text" component with comparison data
@@ -91,6 +95,7 @@ static class InventoryGridCreateItemTooltipPatch
             AddArmorComparison(hoveredItem, equippedItem, comparisonText);
             AddValueComparison(hoveredItem, equippedItem, comparisonText);
             AddOtherStatComparison(hoveredItem, equippedItem, comparisonText);
+            AddSEInformation(hoveredItem, equippedItem, comparisonText);
         }
 
         return Localization.instance.Localize(comparisonText.ToString());
@@ -107,8 +112,8 @@ static class InventoryGridCreateItemTooltipPatch
         float hoveredDurability = hoveredItem.GetMaxDurability();
         float equippedDurability = equippedItem.GetMaxDurability();
         float difference = hoveredDurability - equippedDurability;
-
-        comparisonText.AppendLine($"$item_durability: ({(difference >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{difference}</color>)");
+        if (difference != 0)
+            comparisonText.AppendLine($"$item_durability: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
     }
 
     private static void AddDamageComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText, Player player)
@@ -131,18 +136,30 @@ static class InventoryGridCreateItemTooltipPatch
         float differenceSpirit = hoveredDamage.m_spirit - equippedDamage.m_spirit;
         float differenceTotal = hoveredDamage.GetTotalDamage() - equippedDamage.GetTotalDamage();
 
-        comparisonText.AppendLine($"True Damage: ({(differenceTrue >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceTrue}</color>)");
-        comparisonText.AppendLine($"Blunt Damage: ({(differenceBlunt >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceBlunt}</color>)");
-        comparisonText.AppendLine($"Slash Damage: ({(differenceSlash >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceSlash}</color>)");
-        comparisonText.AppendLine($"Pierce Damage: ({(differencePierce >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differencePierce}</color>)");
-        comparisonText.AppendLine($"Chop Damage: ({(differenceChop >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceChop}</color>)");
-        comparisonText.AppendLine($"Pickaxe Damage: ({(differencePickaxe >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differencePickaxe}</color>)");
-        comparisonText.AppendLine($"Fire Damage: ({(differenceFire >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceFire}</color>)");
-        comparisonText.AppendLine($"Frost Damage: ({(differenceFrost >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceFrost}</color>)");
-        comparisonText.AppendLine($"Lightning Damage: ({(differenceLightning >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceLightning}</color>)");
-        comparisonText.AppendLine($"Poison Damage: ({(differencePoison >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differencePoison}</color>)");
-        comparisonText.AppendLine($"Spirit Damage: ({(differenceSpirit >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceSpirit}</color>)");
-        comparisonText.AppendLine($"All Damage: ({(differenceTotal >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceTotal}</color>)");
+        if (differenceTrue != 0)
+            comparisonText.AppendLine($"True Damage: ({(differenceTrue >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTrue}</color>)");
+        if (differenceBlunt != 0)
+            comparisonText.AppendLine($"Blunt Damage: ({(differenceBlunt >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBlunt}</color>)");
+        if (differenceSlash != 0)
+            comparisonText.AppendLine($"Slash Damage: ({(differenceSlash >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSlash}</color>)");
+        if (differencePierce != 0)
+            comparisonText.AppendLine($"Pierce Damage: ({(differencePierce >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePierce}</color>)");
+        if (differenceChop != 0)
+            comparisonText.AppendLine($"Chop Damage: ({(differenceChop >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceChop}</color>)");
+        if (differencePickaxe != 0)
+            comparisonText.AppendLine($"Pickaxe Damage: ({(differencePickaxe >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePickaxe}</color>)");
+        if (differenceFire != 0)
+            comparisonText.AppendLine($"Fire Damage: ({(differenceFire >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFire}</color>)");
+        if (differenceFrost != 0)
+            comparisonText.AppendLine($"Frost Damage: ({(differenceFrost >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFrost}</color>)");
+        if (differenceLightning != 0)
+            comparisonText.AppendLine($"Lightning Damage: ({(differenceLightning >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceLightning}</color>)");
+        if (differencePoison != 0)
+            comparisonText.AppendLine($"Poison Damage: ({(differencePoison >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePoison}</color>)");
+        if (differenceSpirit != 0)
+            comparisonText.AppendLine($"Spirit Damage: ({(differenceSpirit >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSpirit}</color>)");
+        if (differenceTotal != 0)
+            comparisonText.AppendLine($"All Damage: ({(differenceTotal >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTotal}</color>)");
     }
 
     private static void AddArmorComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -150,8 +167,8 @@ static class InventoryGridCreateItemTooltipPatch
         float hoveredArmor = hoveredItem.GetArmor();
         float equippedArmor = equippedItem.GetArmor();
         float difference = hoveredArmor - equippedArmor;
-
-        comparisonText.AppendLine($"$item_armor: ({(difference >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{difference}</color>)");
+        if (difference != 0)
+            comparisonText.AppendLine($"$item_armor: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
     }
 
     private static void AddWeightComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -159,8 +176,8 @@ static class InventoryGridCreateItemTooltipPatch
         float hoveredWeight = hoveredItem.GetWeight();
         float equippedWeight = equippedItem.GetWeight();
         float difference = hoveredWeight - equippedWeight;
-
-        comparisonText.AppendLine($"Weight: ({(difference >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{difference}</color>)");
+        if (difference != 0)
+            comparisonText.AppendLine($"$item_weight: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
     }
 
     private static void AddValueComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -168,8 +185,8 @@ static class InventoryGridCreateItemTooltipPatch
         int hoveredValue = hoveredItem.GetValue();
         int equippedValue = equippedItem.GetValue();
         int difference = hoveredValue - equippedValue;
-
-        comparisonText.AppendLine($"$item_value: ({(difference >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{difference}</color>)");
+        if (difference != 0)
+            comparisonText.AppendLine($"$item_value: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
     }
 
     private static void AddUseComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -177,19 +194,21 @@ static class InventoryGridCreateItemTooltipPatch
         float hoveredAttackStamina = hoveredItem.m_shared.m_attack.m_attackStamina;
         float equippedAttackStamina = equippedItem.m_shared.m_attack.m_attackStamina;
         float differenceAttackStamina = hoveredAttackStamina - equippedAttackStamina;
-        
+
         float hoveredAttackEitr = hoveredItem.m_shared.m_attack.m_attackEitr;
         float equippedAttackEitr = equippedItem.m_shared.m_attack.m_attackEitr;
         float differenceAttackEitr = hoveredAttackEitr - equippedAttackEitr;
-        
+
         float hoveredHealthUse = hoveredItem.m_shared.m_attack.m_attackEitr;
         float equippedHealthUse = equippedItem.m_shared.m_attack.m_attackEitr;
         float differenceHealthUse = hoveredHealthUse - equippedHealthUse;
-        
-        comparisonText.AppendLine($"$item_attackstamina: ({(differenceAttackStamina >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceAttackStamina}</color>)");
-        comparisonText.AppendLine($"$item_attackeitr: ({(differenceAttackEitr >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceAttackEitr}</color>)");
-        comparisonText.AppendLine($"$item_healthuse: ({(differenceHealthUse >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceHealthUse}</color>)");
-        
+
+        if (differenceAttackStamina != 0)
+            comparisonText.AppendLine($"$item_staminause: ({(differenceAttackStamina >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceAttackStamina}</color>)");
+        if (differenceAttackEitr != 0)
+            comparisonText.AppendLine($"$item_eitruse: ({(differenceAttackEitr >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceAttackEitr}</color>)");
+        if (differenceHealthUse != 0)
+            comparisonText.AppendLine($"$item_healthuse: ({(differenceHealthUse >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceHealthUse}</color>)");
     }
 
     private static void AddOtherStatComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -197,7 +216,7 @@ static class InventoryGridCreateItemTooltipPatch
         float hoveredBp = hoveredItem.GetBlockPower(hoveredItem.m_quality, Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Blocking));
         float equippedBp = equippedItem.GetBlockPower(hoveredItem.m_quality, Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Blocking));
         float difference = hoveredBp - equippedBp;
-        
+
         float hoveredBlockForce = hoveredItem.GetDeflectionForce(hoveredItem.m_quality);
         float equippedBlockForce = equippedItem.GetDeflectionForce(equippedItem.m_quality);
         float differenceBlockForce = hoveredBlockForce - equippedBlockForce;
@@ -206,9 +225,21 @@ static class InventoryGridCreateItemTooltipPatch
         float equippedStamDrain = equippedItem.GetDrawStaminaDrain();
         float differenceStamDrain = hoveredStamDrain - equippedStamDrain;
 
-        comparisonText.AppendLine($"$item_blockarmor: ({(difference >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{difference}</color>)");
-        comparisonText.AppendLine($"$item_blockforce: ({(differenceBlockForce >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceBlockForce}</color>)");
-        comparisonText.AppendLine($"$item_staminahold: ({(differenceStamDrain >= 0 ? "<color=#00FF00> + " : "<color=#FF0000>")}{differenceStamDrain}</color>)");
+        if (difference != 0)
+            comparisonText.AppendLine($"$item_blockarmor: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
+        if (differenceBlockForce != 0)
+            comparisonText.AppendLine($"$item_blockforce: ({(differenceBlockForce >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBlockForce}</color>)");
+        if (differenceStamDrain != 0)
+            comparisonText.AppendLine($"$item_staminahold: ({(differenceStamDrain >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceStamDrain}</color>)");
+    }
+
+    private static void AddSEInformation(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
+    {
+        string modifiersTooltipString = SE_Stats.GetDamageModifiersTooltipString(equippedItem.m_shared.m_damageModifiers);
+        if (modifiersTooltipString.Length > 0)
+        {
+            comparisonText.Append(modifiersTooltipString);
+        }
     }
 }
 

@@ -12,6 +12,7 @@ using UnityEngine;
 namespace ItemCompare
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
+    [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
     public class ItemComparePlugin : BaseUnityPlugin
     {
         internal const string ModName = "ItemCompare";
@@ -20,7 +21,6 @@ namespace ItemCompare
         private const string ModGUID = $"{Author}.{ModName}";
         private static string ConfigFileName = $"{ModGUID}.cfg";
         private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
-        internal static string ConnectionError = "";
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource ItemCompareLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
 

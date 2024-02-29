@@ -78,6 +78,9 @@
         <Reference Include="BepInEx">
             <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
         </Reference>
+        <Reference Include="Jewelcrafting">
+          <HintPath>Libs\JewelcraftingAPI.dll</HintPath>
+        </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
@@ -113,21 +116,22 @@
         <Compile Include="Patches\RedoItemTooltipPatches.cs" />
         <Compile Include="Plugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="VersionHandshake.cs"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
         <Content Include="environment.props"/>
+        <Content Include="ILRepack.targets" />
+        <Content Include="Libs\JewelcraftingAPI.dll" />
         <Content Include="LICENSE.txt"/>
         <Content Include="README.md"/>
         <Content Include="Thunderstore\CHANGELOG.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
         <Content Include="UpdateManifest.ps1"/>
-        <Content Include="xraytooltip" />
     </ItemGroup>
     <ItemGroup>
         <None Include="App.config"/>
+        <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -229,6 +233,13 @@ System.IO.File.WriteAllText(ManifestFile, content);
         <Copy SourceFiles="@(NexusPackageFiles)" DestinationFolder="$(PackageDir)"/>
         <ZipDirectory SourceDirectory="$(PackageDir)" DestinationFile="Nexus\$(PackageName).zip" Overwrite="true"/>
         <RemoveDir Directories="$(PackageDir)"/>
+    </Target>
+    <Import Project="packages\ILRepack.Lib.MSBuild.Task.2.0.26\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.26\build\ILRepack.Lib.MSBuild.Task.targets')" />
+    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+      <PropertyGroup>
+        <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+      </PropertyGroup>
+      <Error Condition="!Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.26\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\ILRepack.Lib.MSBuild.Task.2.0.26\build\ILRepack.Lib.MSBuild.Task.targets'))" />
     </Target>
 
 </Project>
