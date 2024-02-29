@@ -31,8 +31,7 @@ static class InventoryGridCreateItemTooltipPatch
         // Adjust position to display to the right of the original tooltip
         RectTransform originalRT = tooltip.GetComponent<RectTransform>();
         RectTransform clonedRT = clonedTooltip.GetComponent<RectTransform>();
-
-        // Calculate the new position; adjust these values as necessary
+        
         Vector3 offset = new Vector3(originalRT.rect.width, 0, 0);
         clonedRT.anchoredPosition = originalRT.position + offset;
 
@@ -68,8 +67,6 @@ static class InventoryGridCreateItemTooltipPatch
                 topicComponent.text = comparisonTopic; // Set the new topic
             }
         }
-
-        // Optionally, update other components as needed
     }
 
 
@@ -99,7 +96,6 @@ static class InventoryGridCreateItemTooltipPatch
     private static ItemDrop.ItemData? FindEquippedItemMatching(ItemDrop.ItemData hoveredItem)
     {
         Player player = Player.m_localPlayer;
-        // Your existing logic to find the matching equipped item, simplified for demonstration
         return player.GetInventory().GetEquippedItems().FirstOrDefault(i => i.m_shared.m_itemType == hoveredItem.m_shared.m_itemType);
     }
 
