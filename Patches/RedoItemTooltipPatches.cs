@@ -3,6 +3,7 @@ using System.Text;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace ItemCompare.Patches;
 
@@ -23,20 +24,15 @@ static class InventoryGridCreateItemTooltipPatch
         }
 
         GameObject originalPrefab = tooltip.m_tooltipPrefab;
-        clonedTooltip = Object.Instantiate(originalPrefab, tooltip.transform.parent);
+        clonedTooltip = Object.Instantiate(originalPrefab, tooltip.transform.GetComponentInParent<Canvas>().transform);
 
 
         RectTransform originalRT = tooltip.GetComponent<RectTransform>();
         RectTransform clonedRT = clonedTooltip.GetComponent<RectTransform>();
-        // After cloning the tooltip and setting it up
-        TooltipFollower follower = clonedTooltip.AddComponent<TooltipFollower>();
-        follower.target = originalRT; // Assuming originalRT is the RectTransform of the original tooltip
-        follower.offset = new Vector2(originalRT.rect.width + 50, 0); // Customize this offset as needed
+        /*Vector2 offset = new Vector2(originalRT.rect.width + 400, -50);
+        clonedRT.anchoredPosition = originalRT.anchoredPosition + offset;*/
 
-        /*Vector2 offset = new Vector2(originalRT.rect.width + 50, 0);
-        clonedRT.anchoredPosition = originalRT.anchoredPosition + offset;
-
-        // The cloned tooltip is always behind the original and isn't to the right of the original. This is likely due to the fact the original can move around
+        /*// The cloned tooltip is always behind the original and isn't to the right of the original. This is likely due to the fact the original can move around
         // Fix it
         clonedRT.position = originalRT.position + new Vector3(offset.x, -offset.y, 0);*/
 
@@ -190,7 +186,7 @@ static class InventoryGridCreateItemTooltipPatch
     }
 }
 
-[HarmonyPatch(typeof(UITooltip), nameof(UITooltip.OnHoverStart))]
+/*[HarmonyPatch(typeof(UITooltip), nameof(UITooltip.OnHoverStart))]
 static class UITooltipOnHoverStartPatch
 {
     public static void Postfix()
@@ -202,7 +198,7 @@ static class UITooltipOnHoverStartPatch
             InventoryGridCreateItemTooltipPatch.clonedTooltip.SetActive(true);
         }
     }
-}
+}*/
 
 [HarmonyPatch(typeof(UITooltip), nameof(UITooltip.OnPointerExit))]
 public static class UITooltipOnPointerExitPatch
@@ -210,6 +206,87 @@ public static class UITooltipOnPointerExitPatch
     public static void Prefix()
     {
         // Destroy the cloned tooltip when the pointer exits the original tooltip
+        if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
+        {
+            //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
+            Object.Destroy(InventoryGridCreateItemTooltipPatch.clonedTooltip);
+            InventoryGridCreateItemTooltipPatch.clonedTooltip = null;
+        }
+    }
+}
+
+[HarmonyPatch(typeof(UITooltip), nameof(UITooltip.LateUpdate))]
+static class UITooltipLateUpdatePatch
+{
+    static void Postfix(UITooltip __instance)
+    {
+        if (InventoryGridCreateItemTooltipPatch.clonedTooltip == null) return;
+        RectTransform originalRT = __instance.GetComponent<RectTransform>();
+        if (UITooltip.m_current != null && !UITooltip.m_tooltip.activeSelf)
+        {
+            __instance.m_showTimer += Time.deltaTime;
+            if (__instance.m_showTimer > 0.5 || ZInput.IsGamepadActive() && !ZInput.IsMouseActive())
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.SetActive(true);
+        }
+
+        if (ZInput.IsGamepadActive() && !ZInput.IsMouseActive())
+        {
+            if (__instance.m_gamepadFocusObject != null)
+            {
+                if (__instance.m_gamepadFocusObject.activeSelf && UITooltip.m_current != __instance)
+                    InventoryGridCreateItemTooltipPatch.clonedTooltip.SetActive(true);
+                else if (!__instance.m_gamepadFocusObject.activeSelf && UITooltip.m_current == __instance)
+                    DestroyTooltip();
+            }
+            else if (__instance.m_selectable)
+            {
+                if (EventSystem.current.currentSelectedGameObject == __instance.m_selectable.gameObject && UITooltip.m_current != __instance)
+                    InventoryGridCreateItemTooltipPatch.clonedTooltip.SetActive(true);
+                else if (EventSystem.current.currentSelectedGameObject != __instance.m_selectable.gameObject && UITooltip.m_current == __instance)
+                    DestroyTooltip();
+            }
+
+            if (!(UITooltip.m_current == __instance) || !(UITooltip.m_tooltip != null))
+                return;
+            if (__instance.m_anchor != null)
+            {
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.SetParent(__instance.m_anchor);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.localPosition = __instance.m_fixedPosition + new Vector2(originalRT.rect.width + 100, 0);
+            }
+            else if (__instance.m_fixedPosition != Vector2.zero)
+            {
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = __instance.m_fixedPosition + new Vector2(originalRT.rect.width + 100, 0);
+            }
+            else
+            {
+                RectTransform transform = __instance.gameObject.transform as RectTransform;
+                Vector3[] vector3Array = new Vector3[4];
+                Vector3[] fourCornersArray = vector3Array;
+                transform.GetWorldCorners(fourCornersArray);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ((vector3Array[1] + vector3Array[2]) / 2f) + new Vector3(originalRT.rect.width + 100, 0, 0);
+                Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
+            }
+        }
+        else
+        {
+            if (!(UITooltip.m_current == __instance))
+                return;
+            if (UITooltip.m_hovered == null)
+                DestroyTooltip();
+            else if (UITooltip.m_tooltip.activeSelf && !RectTransformUtility.RectangleContainsScreenPoint(UITooltip.m_hovered.transform as RectTransform, ZInput.mousePosition))
+            {
+                DestroyTooltip();
+            }
+            else
+            {
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ZInput.mousePosition;
+                Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
+            }
+        }
+    }
+
+    private static void DestroyTooltip()
+    {
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
         {
             //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
