@@ -17,24 +17,30 @@ static class InventoryGridCreateItemTooltipPatch
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
         // Ensure the cloned tooltip is destroyed if it already exists (to handle dynamic updates)
-        /*if (clonedTooltip != null)
+        if (clonedTooltip != null)
         {
-            ItemComparePlugin.ItemCompareLogger.LogInfo("InventoryGrid.CreateItemTooltip: Cloned tooltip exists, destroying it");
+            //ItemComparePlugin.ItemCompareLogger.LogInfo("InventoryGrid.CreateItemTooltip: Cloned tooltip exists, destroying it");
             Object.Destroy(clonedTooltip);
             clonedTooltip = null;
-        }*/
+        }
 
         ItemComparePlugin.ItemCompareLogger.LogInfo($"InventoryGrid.CreateItemTooltip: {item.m_shared.m_name}");
         // Clone the tooltip prefab
         GameObject originalPrefab = tooltip.m_tooltipPrefab;
-        clonedTooltip = Object.Instantiate(originalPrefab, originalPrefab.transform.parent);
+        clonedTooltip = Object.Instantiate(originalPrefab, tooltip.transform.parent);
 
-        // Adjust position to display to the right of the original tooltip
         RectTransform originalRT = tooltip.GetComponent<RectTransform>();
         RectTransform clonedRT = clonedTooltip.GetComponent<RectTransform>();
 
-        Vector3 offset = new Vector3(originalRT.rect.width + 10, 0, 0);
-        clonedRT.anchoredPosition = originalRT.position + offset;
+
+        Vector2 offset = new Vector2(originalRT.rect.width + 10, 0);
+        clonedRT.anchoredPosition = originalRT.anchoredPosition + offset;
+
+
+        clonedRT.sizeDelta = originalRT.sizeDelta;
+        clonedRT.anchorMin = originalRT.anchorMin;
+        clonedRT.anchorMax = originalRT.anchorMax;
+
 
         // Clamp the cloned tooltip to the screen
         Utils.ClampUIToScreen(clonedRT);
