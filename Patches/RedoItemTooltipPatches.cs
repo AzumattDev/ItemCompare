@@ -21,14 +21,10 @@ static class InventoryGridCreateItemTooltipPatch
     [HarmonyAfter("org.bepinex.plugins.jewelcrafting")]
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
+        if (!ItemComparePlugin.HoverKeybind.Value.IsKeyHeld()) return;
         // Check if there's an equipped item of the same type
         var equippedItem = FindEquippedItemMatching(item);
-        if (equippedItem == null)
-        {
-            // No matching equipped item, do not create/update cloned tooltip
-            return;
-        }
-
+        if (equippedItem == null) return;
         if (equippedItem == item) return;
 
         if (clonedTooltip != null)
@@ -55,9 +51,11 @@ static class InventoryGridCreateItemTooltipPatch
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
         ItemDrop.ItemData? matchingItem = FindEquippedItemMatching(hoveredItem);
+        string colorHexHover = ColorToHexString(API.GetSocketableItemColor(hoveredItem) ?? Color.white);
+        string colorHex = matchingItem != null ? ColorToHexString(API.GetSocketableItemColor(matchingItem) ?? Color.white) : "FFFFFF";
 
-        string comparisonText = $"{Environment.NewLine}Equipping {Localization.instance.Localize(hoveredItem.m_shared.m_name)} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
-        string comparisonTopic = Localization.instance.Localize(matchingItem?.m_shared.m_name) + " (Equipped)";
+        string comparisonText = $"{Environment.NewLine}Equipping <color=#{colorHexHover}>{Localization.instance.Localize(hoveredItem.m_shared.m_name)}</color> changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
+        string comparisonTopic = $"<color=#{colorHex}>{Localization.instance.Localize(matchingItem?.m_shared.m_name)} (Equipped)</color>";
 
         if (API.GetJewelcraftingTooltipRoot(clonedTooltip) is { } jcRoot)
         {
@@ -117,6 +115,11 @@ static class InventoryGridCreateItemTooltipPatch
         return player.GetInventory().GetEquippedItems().FirstOrDefault(i => i.m_shared.m_itemType == hoveredItem.m_shared.m_itemType);
     }
 
+    public static string ColorToHexString(Color color)
+    {
+        return ColorUtility.ToHtmlStringRGB(color);
+    }
+
     private static void AddDurabilityComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
     {
         float hoveredDurability = hoveredItem.GetMaxDurability();
@@ -147,29 +150,29 @@ static class InventoryGridCreateItemTooltipPatch
         float differenceTotal = hoveredDamage.GetTotalDamage() - equippedDamage.GetTotalDamage();
 
         if (differenceTrue != 0)
-            comparisonText.AppendLine($"True Damage: ({(differenceTrue >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTrue}</color>)");
+            comparisonText.AppendLine($"$inventory_damage: ({(differenceTrue >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTrue}</color>)");
         if (differenceBlunt != 0)
-            comparisonText.AppendLine($"Blunt Damage: ({(differenceBlunt >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBlunt}</color>)");
+            comparisonText.AppendLine($"$inventory_blunt: ({(differenceBlunt >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBlunt}</color>)");
         if (differenceSlash != 0)
-            comparisonText.AppendLine($"Slash Damage: ({(differenceSlash >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSlash}</color>)");
+            comparisonText.AppendLine($"$inventory_slash: ({(differenceSlash >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSlash}</color>)");
         if (differencePierce != 0)
-            comparisonText.AppendLine($"Pierce Damage: ({(differencePierce >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePierce}</color>)");
+            comparisonText.AppendLine($"$inventory_pierce: ({(differencePierce >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePierce}</color>)");
         if (differenceChop != 0)
-            comparisonText.AppendLine($"Chop Damage: ({(differenceChop >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceChop}</color>)");
+            comparisonText.AppendLine($"$inventory_chop: ({(differenceChop >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceChop}</color>)");
         if (differencePickaxe != 0)
-            comparisonText.AppendLine($"Pickaxe Damage: ({(differencePickaxe >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePickaxe}</color>)");
+            comparisonText.AppendLine($"$inventory_pickaxe: ({(differencePickaxe >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePickaxe}</color>)");
         if (differenceFire != 0)
-            comparisonText.AppendLine($"Fire Damage: ({(differenceFire >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFire}</color>)");
+            comparisonText.AppendLine($"$inventory_fire: ({(differenceFire >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFire}</color>)");
         if (differenceFrost != 0)
-            comparisonText.AppendLine($"Frost Damage: ({(differenceFrost >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFrost}</color>)");
+            comparisonText.AppendLine($"$inventory_frost: ({(differenceFrost >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceFrost}</color>)");
         if (differenceLightning != 0)
-            comparisonText.AppendLine($"Lightning Damage: ({(differenceLightning >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceLightning}</color>)");
+            comparisonText.AppendLine($"$inventory_lightning: ({(differenceLightning >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceLightning}</color>)");
         if (differencePoison != 0)
-            comparisonText.AppendLine($"Poison Damage: ({(differencePoison >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePoison}</color>)");
+            comparisonText.AppendLine($"$inventory_poison: ({(differencePoison >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differencePoison}</color>)");
         if (differenceSpirit != 0)
-            comparisonText.AppendLine($"Spirit Damage: ({(differenceSpirit >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSpirit}</color>)");
+            comparisonText.AppendLine($"$inventory_spirit: ({(differenceSpirit >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceSpirit}</color>)");
         if (differenceTotal != 0)
-            comparisonText.AppendLine($"All Damage: ({(differenceTotal >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTotal}</color>)");
+            comparisonText.AppendLine($"$item_total $inventory_damage: ({(differenceTotal >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceTotal}</color>)");
     }
 
     private static void AddArmorComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -277,7 +280,7 @@ public static class UITooltipOnPointerExitPatch
         {
             //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
             Object.Destroy(InventoryGridCreateItemTooltipPatch.clonedTooltip);
-            InventoryGridCreateItemTooltipPatch.clonedTooltip = null;
+            InventoryGridCreateItemTooltipPatch.clonedTooltip = null!;
         }
     }
 }
@@ -329,10 +332,10 @@ static class UITooltipLateUpdatePatch
             else
             {
                 Player.m_localPlayer.m_nview.GetZDO().GetFloat(ZDOVars.s_stamina, 0.0f);
-                RectTransform transform = __instance.gameObject.transform as RectTransform;
+                RectTransform? transform = __instance.gameObject.transform as RectTransform;
                 Vector3[] vector3Array = new Vector3[4];
                 Vector3[] fourCornersArray = vector3Array;
-                transform.GetWorldCorners(fourCornersArray);
+                transform?.GetWorldCorners(fourCornersArray);
                 InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = (vector3Array[1] + vector3Array[2]) / 2f + (Vector3)tooltipTranslation;
                 Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
             }
@@ -361,7 +364,7 @@ static class UITooltipLateUpdatePatch
         {
             //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
             Object.Destroy(InventoryGridCreateItemTooltipPatch.clonedTooltip);
-            InventoryGridCreateItemTooltipPatch.clonedTooltip = null;
+            InventoryGridCreateItemTooltipPatch.clonedTooltip = null!;
         }
     }
 }

@@ -38,24 +38,6 @@ namespace ItemCompare
             Config.Save();
         }
 
-        public static GameObject LoadPrefabByName(string partialName)
-        {
-            // Load all GameObjects from Resources
-            GameObject[] allPrefabs = Resources.FindObjectsOfTypeAll<GameObject>();
-
-            // Search for the prefab by partial name
-            foreach (var prefab in allPrefabs)
-            {
-                if (prefab.name.ToLower().Contains(partialName))
-                {
-                    return prefab;
-                }
-            }
-
-            // Return null if not found
-            return null;
-        }
-
         private void SetupWatcher()
         {
             FileSystemWatcher watcher = new(Paths.ConfigPath, ConfigFileName);
