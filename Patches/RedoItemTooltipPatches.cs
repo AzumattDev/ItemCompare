@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 
 namespace ItemCompare.Patches;
+
 // Not the best approach, but since my other attempts have failed, I say fuck it. Try anyways.
 [HarmonyPatch(typeof(InventoryGrid), nameof(InventoryGrid.CreateItemTooltip))]
 static class InventoryGridCreateItemTooltipPatch
@@ -16,12 +17,12 @@ static class InventoryGridCreateItemTooltipPatch
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
         // Ensure the cloned tooltip is destroyed if it already exists (to handle dynamic updates)
-        if (clonedTooltip != null)
+        /*if (clonedTooltip != null)
         {
             ItemComparePlugin.ItemCompareLogger.LogInfo("InventoryGrid.CreateItemTooltip: Cloned tooltip exists, destroying it");
             Object.Destroy(clonedTooltip);
             clonedTooltip = null;
-        }
+        }*/
 
         ItemComparePlugin.ItemCompareLogger.LogInfo($"InventoryGrid.CreateItemTooltip: {item.m_shared.m_name}");
         // Clone the tooltip prefab
@@ -31,9 +32,12 @@ static class InventoryGridCreateItemTooltipPatch
         // Adjust position to display to the right of the original tooltip
         RectTransform originalRT = tooltip.GetComponent<RectTransform>();
         RectTransform clonedRT = clonedTooltip.GetComponent<RectTransform>();
-        
-        Vector3 offset = new Vector3(originalRT.rect.width, 0, 0);
+
+        Vector3 offset = new Vector3(originalRT.rect.width + 10, 0, 0);
         clonedRT.anchoredPosition = originalRT.position + offset;
+
+        // Clamp the cloned tooltip to the screen
+        Utils.ClampUIToScreen(clonedRT);
 
         // Update the cloned tooltip's text with comparison data
         UpdateClonedTooltipText(clonedTooltip, item);
@@ -77,19 +81,20 @@ static class InventoryGridCreateItemTooltipPatch
         ItemDrop.ItemData? equippedItem = FindEquippedItemMatching(hoveredItem);
 
         //if (equippedItem != null && ItemComparePlugin.HoverKeybind.Value.IsKeyHeld())
-        if (equippedItem != null)
-        {
-            // Durability comparison
-            AddDurabilityComparison(hoveredItem, equippedItem, comparisonText);
+        /*if (equippedItem != null)
+        {*/
+        // Durability comparison
+        AddDurabilityComparison(hoveredItem, equippedItem, comparisonText);
 
-            // Weight comparison
-            AddWeightComparison(hoveredItem, equippedItem, comparisonText);
-            AddDamageComparison(hoveredItem, equippedItem, comparisonText, player);
-            AddArmorComparison(hoveredItem, equippedItem, comparisonText);
-            AddValueComparison(hoveredItem, equippedItem, comparisonText);
-            AddOtherStatComparison(hoveredItem, equippedItem, comparisonText);
-        }
+        // Weight comparison
+        AddWeightComparison(hoveredItem, equippedItem, comparisonText);
+        AddDamageComparison(hoveredItem, equippedItem, comparisonText, player);
+        AddArmorComparison(hoveredItem, equippedItem, comparisonText);
+        AddValueComparison(hoveredItem, equippedItem, comparisonText);
+        AddOtherStatComparison(hoveredItem, equippedItem, comparisonText);
+        /*}*/
 
+        ItemComparePlugin.ItemCompareLogger.LogInfo($"GeneratedComparisonText: {comparisonText.ToString()}");
         return comparisonText.ToString();
     }
 
@@ -111,18 +116,44 @@ static class InventoryGridCreateItemTooltipPatch
     private static void AddDamageComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText, Player player)
     {
         // Simplified; actual damage may depend on skills, item quality, etc.
-        var hoveredDamage = hoveredItem.GetDamage();
-        var equippedDamage = equippedItem.GetDamage();
+        HitData.DamageTypes hoveredDamage = hoveredItem.GetDamage();
+        HitData.DamageTypes equippedDamage = equippedItem.GetDamage();
 
-        comparisonText.AppendLine($"Damage: {hoveredDamage} vs. {equippedDamage}");
+        // Calculate differences
+        float differenceTrue = hoveredDamage.m_damage - equippedDamage.m_damage;
+        float differenceBlunt = hoveredDamage.m_blunt - equippedDamage.m_blunt;
+        float differenceSlash = hoveredDamage.m_slash - equippedDamage.m_slash;
+        float differencePierce = hoveredDamage.m_pierce - equippedDamage.m_pierce;
+        float differenceChop = hoveredDamage.m_chop - equippedDamage.m_chop;
+        float differencePickaxe = hoveredDamage.m_pickaxe - equippedDamage.m_pickaxe;
+        float differenceFire = hoveredDamage.m_fire - equippedDamage.m_fire;
+        float differenceFrost = hoveredDamage.m_frost - equippedDamage.m_frost;
+        float differenceLightning = hoveredDamage.m_lightning - equippedDamage.m_lightning;
+        float differencePoison = hoveredDamage.m_poison - equippedDamage.m_poison;
+        float differenceSpirit = hoveredDamage.m_spirit - equippedDamage.m_spirit;
+        float differenceTotal = hoveredDamage.GetTotalDamage() - equippedDamage.GetTotalDamage();
+
+        comparisonText.AppendLine($"True Damage: {hoveredDamage.m_damage} vs. {equippedDamage.m_damage} ({(differenceTrue >= 0 ? "+" : "")}{differenceTrue})");
+        comparisonText.AppendLine($"Blunt Damage: {hoveredDamage.m_blunt} vs. {equippedDamage.m_blunt} ({(differenceBlunt >= 0 ? "+" : "")}{differenceBlunt})");
+        comparisonText.AppendLine($"Slash Damage: {hoveredDamage.m_slash} vs. {equippedDamage.m_slash} ({(differenceSlash >= 0 ? "+" : "")}{differenceSlash})");
+        comparisonText.AppendLine($"Pierce Damage: {hoveredDamage.m_pierce} vs. {equippedDamage.m_pierce} ({(differencePierce >= 0 ? "+" : "")}{differencePierce})");
+        comparisonText.AppendLine($"Chop Damage: {hoveredDamage.m_chop} vs. {equippedDamage.m_chop} ({(differenceChop >= 0 ? "+" : "")}{differenceChop})");
+        comparisonText.AppendLine($"Pickaxe Damage: {hoveredDamage.m_pickaxe} vs. {equippedDamage.m_pickaxe} ({(differencePickaxe >= 0 ? "+" : "")}{differencePickaxe})");
+        comparisonText.AppendLine($"Fire Damage: {hoveredDamage.m_fire} vs. {equippedDamage.m_fire} ({(differenceFire >= 0 ? "+" : "")}{differenceFire})");
+        comparisonText.AppendLine($"Frost Damage: {hoveredDamage.m_frost} vs. {equippedDamage.m_frost} ({(differenceFrost >= 0 ? "+" : "")}{differenceFrost})");
+        comparisonText.AppendLine($"Lightning Damage: {hoveredDamage.m_lightning} vs. {equippedDamage.m_lightning} ({(differenceLightning >= 0 ? "+" : "")}{differenceLightning})");
+        comparisonText.AppendLine($"Poison Damage: {hoveredDamage.m_poison} vs. {equippedDamage.m_poison} ({(differencePoison >= 0 ? "+" : "")}{differencePoison})");
+        comparisonText.AppendLine($"Spirit Damage: {hoveredDamage.m_spirit} vs. {equippedDamage.m_spirit} ({(differenceSpirit >= 0 ? "+" : "")}{differenceSpirit})");
+        comparisonText.AppendLine($"All Damage: {hoveredDamage.GetTotalDamage()} vs. {equippedDamage.GetTotalDamage()} ({(differenceTotal >= 0 ? "+" : "")}{differenceTotal})");
     }
 
     private static void AddArmorComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
     {
         float hoveredArmor = hoveredItem.GetArmor();
         float equippedArmor = equippedItem.GetArmor();
+        float difference = hoveredArmor - equippedArmor;
 
-        comparisonText.AppendLine($"Armor: {hoveredArmor} vs. {equippedArmor}");
+        comparisonText.AppendLine($"Armor: {hoveredArmor} vs. {equippedArmor} ({(difference >= 0 ? "+" : "")}{difference})");
     }
 
     private static void AddWeightComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
@@ -138,20 +169,23 @@ static class InventoryGridCreateItemTooltipPatch
     {
         int hoveredValue = hoveredItem.GetValue();
         int equippedValue = equippedItem.GetValue();
+        int difference = hoveredValue - equippedValue;
 
-        comparisonText.AppendLine($"Value: {hoveredValue} vs. {equippedValue}");
+        comparisonText.AppendLine($"Value: {hoveredValue} vs. {equippedValue} ({(difference >= 0 ? "+" : "")}{difference})");
     }
 
     private static void AddOtherStatComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
     {
         float hoveredBp = hoveredItem.GetBlockPower(hoveredItem.m_quality, Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Blocking));
         float equippedBp = equippedItem.GetBlockPower(hoveredItem.m_quality, Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Blocking));
+        float difference = hoveredBp - equippedBp;
 
         float hoveredStamDrain = hoveredItem.GetDrawStaminaDrain();
         float equippedStamDrain = equippedItem.GetDrawStaminaDrain();
+        float differenceStamDrain = hoveredStamDrain - equippedStamDrain;
 
-        comparisonText.AppendLine($"Block Power: {hoveredBp} vs. {equippedBp}");
-        comparisonText.AppendLine($"$item_staminahold: {hoveredStamDrain} vs. {equippedStamDrain}");
+        comparisonText.AppendLine($"Block Power: {hoveredBp} vs. {equippedBp} ({(difference >= 0 ? "+" : "")}{difference})");
+        comparisonText.AppendLine($"$item_staminahold: {hoveredStamDrain} vs. {equippedStamDrain} ({(differenceStamDrain >= 0 ? "+" : "")}{differenceStamDrain})");
     }
 }
 
