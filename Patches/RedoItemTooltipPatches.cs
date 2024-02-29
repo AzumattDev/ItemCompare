@@ -54,32 +54,14 @@ static class InventoryGridCreateItemTooltipPatch
 
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
-        string comparisonText = $"{Environment.NewLine}Equipping {Localization.instance.Localize(hoveredItem.m_shared.m_name)} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
-        string comparisonTopic = Localization.instance.Localize(FindEquippedItemMatching(hoveredItem)?.m_shared.m_name) + " (Equipped)";
+        ItemDrop.ItemData? matchingItem = FindEquippedItemMatching(hoveredItem);
 
-        if (API.IsLoaded())
+        string comparisonText = $"{Environment.NewLine}Equipping {Localization.instance.Localize(hoveredItem.m_shared.m_name)} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
+        string comparisonTopic = Localization.instance.Localize(matchingItem?.m_shared.m_name) + " (Equipped)";
+
+        if (API.GetJewelcraftingTooltipRoot(clonedTooltip) is { } jcRoot)
         {
-            var gems = API.GetGems(hoveredItem);
-            Sprite? sprite = null;
-            if (gems.Count > 0)
-            {
-                for (int i = 0; i < gems.Count; ++i)
-                {
-                    API.GemInfo? gemInfo = gems[i];
-                    if (gemInfo == null) continue;
-                    var transmute = clonedTooltip.transform.Find($"Bkg (1)/TrannyHoles/Transmute_Text_{i}");
-                    if (transmute != null)
-                    {
-                        if (ObjectDB.instance.GetItemPrefab(gemInfo.gemPrefab) is { } gameObject)
-                        {
-                            sprite = gameObject.GetComponent<ItemDrop>().m_itemData.GetIcon();
-                            //transmute.GetComponent<TMP_Text>().text = Localization.instance.Localize(text);
-                            transmute.Find("Border/Transmute_1").gameObject.SetActive(sprite is not null);
-                            transmute.Find("Border/Transmute_1").GetComponent<Image>().sprite = sprite;
-                        }
-                    }
-                }
-            }
+            API.FillItemContainerTooltip(matchingItem, jcRoot, false);
         }
 
 
@@ -307,6 +289,7 @@ static class UITooltipLateUpdatePatch
     {
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip == null) return;
         RectTransform originalRT = __instance.GetComponent<RectTransform>();
+        RectTransform tooltipRT = (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.clonedTooltip) ?? InventoryGridCreateItemTooltipPatch.clonedTooltip.transform).GetComponent<RectTransform>();
         if (UITooltip.m_current != null && !UITooltip.m_tooltip.activeSelf)
         {
             __instance.m_showTimer += Time.deltaTime;
@@ -333,14 +316,15 @@ static class UITooltipLateUpdatePatch
 
             if (!(UITooltip.m_current == __instance) || !(UITooltip.m_tooltip != null))
                 return;
+            Vector2 tooltipTranslation = new(originalRT.rect.width * 2 + tooltipRT.rect.width, 0);
             if (__instance.m_anchor != null)
             {
                 InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.SetParent(__instance.m_anchor);
-                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.localPosition = __instance.m_fixedPosition + new Vector2(originalRT.rect.width + 300, -100);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.localPosition = __instance.m_fixedPosition + tooltipTranslation;
             }
             else if (__instance.m_fixedPosition != Vector2.zero)
             {
-                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = __instance.m_fixedPosition + new Vector2(originalRT.rect.width + 300, -100);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = __instance.m_fixedPosition + tooltipTranslation;
             }
             else
             {
@@ -349,7 +333,7 @@ static class UITooltipLateUpdatePatch
                 Vector3[] vector3Array = new Vector3[4];
                 Vector3[] fourCornersArray = vector3Array;
                 transform.GetWorldCorners(fourCornersArray);
-                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ((vector3Array[1] + vector3Array[2]) / 2f) + new Vector3(originalRT.rect.width + 300, -100, 0);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = (vector3Array[1] + vector3Array[2]) / 2f + (Vector3)tooltipTranslation;
                 Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
             }
         }
@@ -365,7 +349,7 @@ static class UITooltipLateUpdatePatch
             }
             else
             {
-                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ZInput.mousePosition + new Vector3(originalRT.rect.width + 300, 0, 0);
+                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ZInput.mousePosition + new Vector3(originalRT.rect.width * 2 + tooltipRT.rect.width, 0, 0);
                 Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
             }
         }

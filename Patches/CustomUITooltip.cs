@@ -197,7 +197,7 @@ public class CustomUITooltip :
                 List<RaycastResult> raycastResults = new List<RaycastResult>();
                 EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current)
                 {
-                    position = ZInput.mousePosition
+                    position = ZInput.mousePosition,
                 }, raycastResults);
                 if (raycastResults.Count <= 0 || !(raycastResults[0].gameObject == m_selectable.gameObject))
                     return;
