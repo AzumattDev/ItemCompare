@@ -2,9 +2,11 @@
 using System.Linq;
 using System.Text;
 using HarmonyLib;
+using Jewelcrafting;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace ItemCompare.Patches;
@@ -52,8 +54,34 @@ static class InventoryGridCreateItemTooltipPatch
 
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
-        string comparisonText = $"{Environment.NewLine}Equipping {hoveredItem.m_shared.m_name} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
+        string comparisonText = $"{Environment.NewLine}Equipping {Localization.instance.Localize(hoveredItem.m_shared.m_name)} changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
         string comparisonTopic = Localization.instance.Localize(FindEquippedItemMatching(hoveredItem)?.m_shared.m_name) + " (Equipped)";
+
+        if (API.IsLoaded())
+        {
+            var gems = API.GetGems(hoveredItem);
+            Sprite? sprite = null;
+            if (gems.Count > 0)
+            {
+                for (int i = 0; i < gems.Count; ++i)
+                {
+                    API.GemInfo? gemInfo = gems[i];
+                    if (gemInfo == null) continue;
+                    var transmute = clonedTooltip.transform.Find($"Bkg (1)/TrannyHoles/Transmute_Text_{i}");
+                    if (transmute != null)
+                    {
+                        if (ObjectDB.instance.GetItemPrefab(gemInfo.gemPrefab) is { } gameObject)
+                        {
+                            sprite = gameObject.GetComponent<ItemDrop>().m_itemData.GetIcon();
+                            //transmute.GetComponent<TMP_Text>().text = Localization.instance.Localize(text);
+                            transmute.Find("Border/Transmute_1").gameObject.SetActive(sprite is not null);
+                            transmute.Find("Border/Transmute_1").GetComponent<Image>().sprite = sprite;
+                        }
+                    }
+                }
+            }
+        }
+
 
         // Find and update the "Text" component with comparison data
         Transform textTransform = Utils.FindChild(clonedTooltip.transform, "Text");

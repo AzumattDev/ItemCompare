@@ -121,7 +121,9 @@
         <Content Include=".gitignore"/>
         <Content Include="environment.props"/>
         <Content Include="ILRepack.targets" />
-        <Content Include="Libs\JewelcraftingAPI.dll" />
+        <Content Include="Libs\JewelcraftingAPI.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="LICENSE.txt"/>
         <Content Include="README.md"/>
         <Content Include="Thunderstore\CHANGELOG.md"/>
