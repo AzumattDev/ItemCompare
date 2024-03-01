@@ -22,7 +22,6 @@ static class InventoryGridCreateItemTooltipPatch
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
         if (!ItemComparePlugin.HoverKeybind.Value.IsKeyHeld()) return;
-        // Check if there's an equipped item of the same type
         var equippedItem = FindEquippedItemMatching(item);
         if (equippedItem == null) return;
         if (equippedItem == item) return;
@@ -42,6 +41,16 @@ static class InventoryGridCreateItemTooltipPatch
         clonedRT.sizeDelta = originalRT.sizeDelta;
         clonedRT.anchorMin = originalRT.anchorMin;
         clonedRT.anchorMax = originalRT.anchorMax;
+        clonedRT.pivot = originalRT.pivot;
+        clonedRT.position = originalRT.position;
+        clonedRT.localScale = originalRT.localScale;
+        clonedRT.localRotation = originalRT.localRotation;
+        clonedRT.localEulerAngles = originalRT.localEulerAngles;
+        clonedRT.localPosition = originalRT.localPosition;
+        clonedRT.offsetMin = originalRT.offsetMin;
+        clonedRT.offsetMax = originalRT.offsetMax;
+        clonedRT.anchoredPosition = originalRT.anchoredPosition + new Vector2(originalRT.rect.width * 3 + clonedRT.rect.width, 0);
+
 
         Utils.ClampUIToScreen(clonedRT);
 
@@ -93,7 +102,6 @@ static class InventoryGridCreateItemTooltipPatch
         Player player = Player.m_localPlayer;
         ItemDrop.ItemData? equippedItem = FindEquippedItemMatching(hoveredItem);
 
-        //if (equippedItem != null && ItemComparePlugin.HoverKeybind.Value.IsKeyHeld())
         if (equippedItem != null)
         {
             AddDurabilityComparison(hoveredItem, equippedItem, comparisonText);
@@ -261,7 +269,6 @@ static class UITooltipOnHoverStartPatch
 {
     public static void Postfix()
     {
-        // Check if the cloned tooltip exists and make it active
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
         {
             // ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnHoverStart: Cloned tooltip exists, making it active");
@@ -275,7 +282,6 @@ public static class UITooltipOnPointerExitPatch
 {
     public static void Prefix()
     {
-        // Destroy the cloned tooltip when the pointer exits the original tooltip
         if (InventoryGridCreateItemTooltipPatch.clonedTooltip != null)
         {
             //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
@@ -342,7 +348,7 @@ static class UITooltipLateUpdatePatch
         }
         else
         {
-            if (!(UITooltip.m_current == __instance))
+            if (UITooltip.m_current != __instance)
                 return;
             if (UITooltip.m_hovered == null)
                 DestroyTooltip();
@@ -352,8 +358,16 @@ static class UITooltipLateUpdatePatch
             }
             else
             {
-                InventoryGridCreateItemTooltipPatch.clonedTooltip.transform.position = ZInput.mousePosition + new Vector3(originalRT.rect.width * 2 + tooltipRT.rect.width, 0, 0);
-                Utils.ClampUIToScreen(InventoryGridCreateItemTooltipPatch.clonedTooltip.transform as RectTransform);
+                if (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.clonedTooltip) is { } jcRoot)
+                {
+                    jcRoot.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width + tooltipRT.rect.width) + Vector3.up * (originalRT.rect.height / 6.5f + tooltipRT.rect.height / 6.5f);
+                }
+                else
+                {
+                    tooltipRT.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width * 4 + tooltipRT.rect.width);
+                }
+
+                Utils.ClampUIToScreen(tooltipRT.transform as RectTransform);
             }
         }
     }

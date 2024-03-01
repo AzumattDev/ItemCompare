@@ -112,8 +112,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Patches\CustomUITooltip.cs" />
-        <Compile Include="Patches\ItemComparePatches.cs" />
-        <Compile Include="Patches\RedoItemTooltipPatches.cs" />
+        <Compile Include="Patches\ItemTooltipPatches.cs" />
         <Compile Include="Plugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
