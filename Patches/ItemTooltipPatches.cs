@@ -111,7 +111,7 @@ static class InventoryGridCreateItemTooltipPatch
             AddArmorComparison(hoveredItem, equippedItem, comparisonText);
             AddValueComparison(hoveredItem, equippedItem, comparisonText);
             AddOtherStatComparison(hoveredItem, equippedItem, comparisonText);
-            AddSEInformation(hoveredItem, equippedItem, comparisonText);
+            AddSeInformation(hoveredItem, equippedItem, comparisonText);
         }
 
         return Localization.instance.Localize(comparisonText.ToString());
@@ -246,15 +246,55 @@ static class InventoryGridCreateItemTooltipPatch
         float equippedStamDrain = equippedItem.GetDrawStaminaDrain();
         float differenceStamDrain = hoveredStamDrain - equippedStamDrain;
 
+        float hoveredKnockback = hoveredItem.m_shared.m_attackForce;
+        float equippedKnockback = equippedItem.m_shared.m_attackForce;
+        float differenceKnockback = hoveredKnockback - equippedKnockback;
+
+        float hoveredBackstab = hoveredItem.m_shared.m_backstabBonus;
+        float equippedBackstab = equippedItem.m_shared.m_backstabBonus;
+        float differenceBackstab = hoveredBackstab - equippedBackstab;
+
+        float eitrRegenModifier = hoveredItem.m_shared.m_eitrRegenModifier;
+        float equippedEitrRegenModifier = equippedItem.m_shared.m_eitrRegenModifier;
+        float differenceEitrRegenModifier = eitrRegenModifier - equippedEitrRegenModifier;
+
+        float hoveredMovementModifier = hoveredItem.m_shared.m_movementModifier;
+        float equippedMovementModifier = equippedItem.m_shared.m_movementModifier;
+        float differenceMovementModifier = hoveredMovementModifier - equippedMovementModifier;
+
+        float hoveredBaseItemStaminaModifier = hoveredItem.m_shared.m_baseItemsStaminaModifier;
+        float equippedBaseItemStaminaModifier = equippedItem.m_shared.m_baseItemsStaminaModifier;
+        float differenceBaseItemStaminaModifier = hoveredBaseItemStaminaModifier - equippedBaseItemStaminaModifier;
+
+        float hoveredParryBonus = hoveredItem.m_shared.m_timedBlockBonus;
+        float equippedParryBonus = equippedItem.m_shared.m_timedBlockBonus;
+        float differenceParryBonus = hoveredParryBonus - equippedParryBonus;
+
         if (difference != 0)
             comparisonText.AppendLine($"$item_blockarmor: ({(difference >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{difference}</color>)");
         if (differenceBlockForce != 0)
             comparisonText.AppendLine($"$item_blockforce: ({(differenceBlockForce >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBlockForce}</color>)");
+        if (differenceParryBonus != 0)
+            comparisonText.AppendLine($"$item_parrybonus: ({(differenceParryBonus >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceParryBonus}x</color>)");
         if (differenceStamDrain != 0)
             comparisonText.AppendLine($"$item_staminahold: ({(differenceStamDrain >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceStamDrain}</color>)");
+        if (differenceKnockback != 0)
+            comparisonText.AppendLine($"$item_knockback: ({(differenceKnockback >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceKnockback}</color>)");
+        if (differenceBackstab != 0)
+            comparisonText.AppendLine($"$item_backstab: ({(differenceBackstab >= 0 ? "<color=#00FF00>+" : "<color=#FF0000>")}{differenceBackstab}x</color>)");
+
+        if (differenceEitrRegenModifier != 0)
+            comparisonText.AppendLine($"$item_eitrregen_modifier: ({(differenceEitrRegenModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceEitrRegenModifier:+0;-0}</color>)");
+        if (differenceMovementModifier != 0)
+            comparisonText.AppendLine($"$item_movement_modifier: ({(differenceMovementModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceMovementModifier:+0;-0}</color>)");
+        if (differenceBaseItemStaminaModifier != 0)
+            comparisonText.AppendLine($"$base_item_modifier: ({(differenceBaseItemStaminaModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceBaseItemStaminaModifier:+0;-0}</color>)");
+
+        if (hoveredItem.GetSetStatusEffectTooltip(hoveredItem.m_quality, Player.m_localPlayer.GetSkillLevel(hoveredItem.m_shared.m_skillType)) != equippedItem.GetSetStatusEffectTooltip(equippedItem.m_quality, Player.m_localPlayer.GetSkillLevel(equippedItem.m_shared.m_skillType)))
+            comparisonText.AppendLine($"\n\n$item_seteffect: ({hoveredItem.GetSetStatusEffectTooltip(hoveredItem.m_quality, Player.m_localPlayer.GetSkillLevel(hoveredItem.m_shared.m_skillType))})");
     }
 
-    private static void AddSEInformation(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
+    private static void AddSeInformation(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
     {
         string modifiersTooltipString = SE_Stats.GetDamageModifiersTooltipString(equippedItem.m_shared.m_damageModifiers);
         if (modifiersTooltipString.Length > 0)
