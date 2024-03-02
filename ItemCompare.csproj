@@ -111,10 +111,10 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Patches\CustomUITooltip.cs" />
         <Compile Include="Patches\ItemTooltipPatches.cs" />
         <Compile Include="Plugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="Util.cs" />
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
