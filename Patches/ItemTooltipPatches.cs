@@ -61,7 +61,7 @@ static class InventoryGridCreateItemTooltipPatch
         ItemDrop.ItemData? matchingItem = Util.FindEquippedItemMatching(hoveredItem);
         string colorHexHover = Util.ColorToHexString(API.GetSocketableItemColor(hoveredItem) ?? Color.yellow);
         string colorHex = matchingItem != null ? Util.ColorToHexString(API.GetSocketableItemColor(matchingItem) ?? Color.yellow) : "FFFFFF";
-        var equippingText = Localization.instance.Localize("$hud_equipping");
+        string? equippingText = Localization.instance.Localize("$hud_equipping");
         string comparisonText = $"{Environment.NewLine}{equippingText} <color=#{colorHexHover}>{Localization.instance.Localize(hoveredItem.m_shared.m_name)}</color> changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
         string comparisonTopic = $"<color=#{colorHex}>{Localization.instance.Localize(matchingItem?.m_shared.m_name)} (Equipped)</color>";
 

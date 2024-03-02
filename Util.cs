@@ -16,7 +16,6 @@ public class Util
     {
         if (InventoryGridCreateItemTooltipPatch.ClonedTooltip != null)
         {
-            //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
             Object.Destroy(InventoryGridCreateItemTooltipPatch.ClonedTooltip);
             InventoryGridCreateItemTooltipPatch.ClonedTooltip = null!;
         }
@@ -43,7 +42,6 @@ public class Util
 
     public static void AddDamageComparison(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText, Player player)
     {
-        // Simplified; actual damage may depend on skills, item quality, etc.
         HitData.DamageTypes hoveredDamage = hoveredItem.GetDamage();
         HitData.DamageTypes equippedDamage = equippedItem.GetDamage();
 
@@ -252,10 +250,30 @@ public class Util
 
     public static void AddSeInformation(ItemDrop.ItemData hoveredItem, ItemDrop.ItemData equippedItem, StringBuilder comparisonText)
     {
-        string modifiersTooltipString = SE_Stats.GetDamageModifiersTooltipString(equippedItem.m_shared.m_damageModifiers);
-        if (modifiersTooltipString.Length > 0)
+        
+        // Determine the modifiers for both hovered and equipped items
+        string hoveredModifiersTooltip = SE_Stats.GetDamageModifiersTooltipString(hoveredItem.m_shared.m_damageModifiers);
+        string equippedModifiersTooltip = SE_Stats.GetDamageModifiersTooltipString(equippedItem.m_shared.m_damageModifiers);
+
+        // Check if the modifiers are different
+        if (hoveredModifiersTooltip != equippedModifiersTooltip)
         {
-            comparisonText.Append(modifiersTooltipString);
+            // If the equipped item has a modifier that the hovered item doesn't
+            if (!string.IsNullOrEmpty(equippedModifiersTooltip) && string.IsNullOrEmpty(hoveredModifiersTooltip))
+            {
+                comparisonText.AppendLine($"<color=#FF0000>- $hud_remove: {equippedModifiersTooltip}</color>");
+            }
+            // If the hovered item has a modifier that the equipped item doesn't
+            else if (string.IsNullOrEmpty(equippedModifiersTooltip) && !string.IsNullOrEmpty(hoveredModifiersTooltip))
+            {
+                comparisonText.AppendLine($"<color=#00FF00>+ $piece_smelter_add: {hoveredModifiersTooltip}</color>");
+            }
+            // If both items have modifiers but they are different
+            else
+            {
+                comparisonText.AppendLine($"<color=#FF0000>- $hud_remove: {equippedModifiersTooltip}</color>");
+                comparisonText.AppendLine($"<color=#00FF00>+ $piece_smelter_add: {hoveredModifiersTooltip}</color>");
+            }
         }
     }
 }
