@@ -7,6 +7,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using JetBrains.Annotations;
+using Jewelcrafting;
 using UnityEngine;
 
 namespace ItemCompare
@@ -23,9 +24,18 @@ namespace ItemCompare
         private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource ItemCompareLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static GameObject JCTooltip = null!;
+        public static GameObject InventoryTooltip = null!;
+
+        public enum Toggle
+        {
+            Off,
+            On
+        }
 
         public void Awake()
         {
+            KeyHoldNeeded = config("1 - General", "Key Hold Needed", Toggle.On, "Should they key be held down to compare items? [Default: On]");
             HoverKeybind = config("1 - General", "Hover Keybind", new KeyboardShortcut(KeyCode.Z), "Key to hold down while hovering over an item to compare it to the item already equipped. [Default: Z]");
 
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -68,6 +78,7 @@ namespace ItemCompare
         #region ConfigOptions
 
         internal static ConfigEntry<KeyboardShortcut> HoverKeybind = null!;
+        internal static ConfigEntry<Toggle> KeyHoldNeeded = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description)
         {

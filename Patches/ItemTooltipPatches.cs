@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using HarmonyLib;
 using Jewelcrafting;
@@ -19,8 +20,8 @@ static class InventoryGridCreateItemTooltipPatch
     [HarmonyAfter("org.bepinex.plugins.jewelcrafting")]
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
-        //if (!ItemComparePlugin.HoverKeybind.Value.IsKeyHeld()) return;
-        var equippedItem = Util.FindEquippedItemMatching(item);
+        if (!ItemComparePlugin.HoverKeybind.Value.IsKeyHeld() && ItemComparePlugin.KeyHoldNeeded.Value != ItemComparePlugin.Toggle.Off) return;
+        ItemDrop.ItemData? equippedItem = Util.FindEquippedItemMatching(item);
         if (equippedItem == null) return;
         if (equippedItem == item) return;
 
@@ -48,11 +49,10 @@ static class InventoryGridCreateItemTooltipPatch
         clonedRT.localPosition = originalRT.localPosition;
         clonedRT.offsetMin = originalRT.offsetMin;
         clonedRT.offsetMax = originalRT.offsetMax;
-        clonedRT.anchoredPosition = originalRT.anchoredPosition + new Vector2(originalRT.rect.width * 3 + clonedRT.rect.width, 0);
+        //clonedRT.anchoredPosition = originalRT.anchoredPosition + new Vector2(originalRT.rect.width * 3 + clonedRT.rect.width, 0);
 
 
         Utils.ClampUIToScreen(clonedRT);
-
         UpdateClonedTooltipText(ClonedTooltip, item);
     }
 
@@ -61,8 +61,8 @@ static class InventoryGridCreateItemTooltipPatch
         ItemDrop.ItemData? matchingItem = Util.FindEquippedItemMatching(hoveredItem);
         string colorHexHover = Util.ColorToHexString(API.GetSocketableItemColor(hoveredItem) ?? Color.yellow);
         string colorHex = matchingItem != null ? Util.ColorToHexString(API.GetSocketableItemColor(matchingItem) ?? Color.yellow) : "FFFFFF";
-
-        string comparisonText = $"{Environment.NewLine}Equipping <color=#{colorHexHover}>{Localization.instance.Localize(hoveredItem.m_shared.m_name)}</color> changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
+        var equippingText = Localization.instance.Localize("$hud_equipping");
+        string comparisonText = $"{Environment.NewLine}{equippingText} <color=#{colorHexHover}>{Localization.instance.Localize(hoveredItem.m_shared.m_name)}</color> changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
         string comparisonTopic = $"<color=#{colorHex}>{Localization.instance.Localize(matchingItem?.m_shared.m_name)} (Equipped)</color>";
 
         if (API.GetJewelcraftingTooltipRoot(clonedTooltip) is { } jcRoot)
@@ -124,7 +124,6 @@ static class UITooltipOnHoverStartPatch
     {
         if (InventoryGridCreateItemTooltipPatch.ClonedTooltip != null)
         {
-            // ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnHoverStart: Cloned tooltip exists, making it active");
             InventoryGridCreateItemTooltipPatch.ClonedTooltip.SetActive(true);
         }
     }
@@ -136,7 +135,6 @@ public static class UITooltipOnPointerExitPatch
     public static void Prefix()
     {
         if (InventoryGridCreateItemTooltipPatch.ClonedTooltip == null) return;
-        //ItemComparePlugin.ItemCompareLogger.LogInfo("UITooltip.OnPointerExit: Cloned tooltip exists, destroying it");
         Object.Destroy(InventoryGridCreateItemTooltipPatch.ClonedTooltip);
         InventoryGridCreateItemTooltipPatch.ClonedTooltip = null!;
     }
@@ -211,7 +209,7 @@ static class UITooltipLateUpdatePatch
             {
                 if (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.ClonedTooltip) is { } jcRoot)
                 {
-                    jcRoot.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width + tooltipRT.rect.width) + Vector3.up * (originalRT.rect.height / 6.5f + tooltipRT.rect.height / 6.5f);
+                    jcRoot.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width + tooltipRT.rect.width); // + Vector3.up * (originalRT.rect.height / 6.5f + tooltipRT.rect.height / 6.5f);
                 }
                 else
                 {
