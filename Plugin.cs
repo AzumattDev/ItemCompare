@@ -17,15 +17,13 @@ namespace ItemCompare
     public class ItemComparePlugin : BaseUnityPlugin
     {
         internal const string ModName = "ItemCompare";
-        internal const string ModVersion = "1.0.0";
+        internal const string ModVersion = "1.0.1";
         internal const string Author = "Azumatt";
         private const string ModGUID = $"{Author}.{ModName}";
         private static string ConfigFileName = $"{ModGUID}.cfg";
         private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource ItemCompareLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
-        public static GameObject JCTooltip = null!;
-        public static GameObject InventoryTooltip = null!;
 
         public enum Toggle
         {

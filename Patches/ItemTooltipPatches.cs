@@ -17,7 +17,7 @@ static class InventoryGridCreateItemTooltipPatch
     public static GameObject ClonedTooltip = null!;
 
     [HarmonyPriority(Priority.Last)]
-    [HarmonyAfter("org.bepinex.plugins.jewelcrafting")]
+    [HarmonyAfter("org.bepinex.plugins.jewelcrafting", "randyknapp.mods.epicloot")]
     public static void Postfix(ItemDrop.ItemData item, UITooltip tooltip, InventoryGrid __instance)
     {
         if (!ItemComparePlugin.HoverKeybind.Value.IsKeyHeld() && ItemComparePlugin.KeyHoldNeeded.Value != ItemComparePlugin.Toggle.Off) return;
@@ -59,15 +59,17 @@ static class InventoryGridCreateItemTooltipPatch
     private static void UpdateClonedTooltipText(GameObject clonedTooltip, ItemDrop.ItemData hoveredItem)
     {
         ItemDrop.ItemData? matchingItem = Util.FindEquippedItemMatching(hoveredItem);
-        string colorHexHover = Util.ColorToHexString(API.GetSocketableItemColor(hoveredItem) ?? Color.yellow);
-        string colorHex = matchingItem != null ? Util.ColorToHexString(API.GetSocketableItemColor(matchingItem) ?? Color.yellow) : "FFFFFF";
+        string colorHexHover = Util.ColorToHexString(API.IsLoaded() ? API.GetSocketableItemColor(hoveredItem) ?? Color.yellow : Color.yellow);
+        string colorHex = matchingItem != null ? Util.ColorToHexString(API.IsLoaded() ? API.GetSocketableItemColor(matchingItem) ?? Color.yellow : Color.yellow) : "FFFFFF";
         string? equippingText = Localization.instance.Localize("$hud_equipping");
         string comparisonText = $"{Environment.NewLine}{equippingText} <color=#{colorHexHover}>{Localization.instance.Localize(hoveredItem.m_shared.m_name)}</color> changes the following stats:{Environment.NewLine}{Environment.NewLine}" + GenerateComparisonText(hoveredItem);
         string comparisonTopic = $"<color=#{colorHex}>{Localization.instance.Localize(matchingItem?.m_shared.m_name)} (Equipped)</color>";
-
-        if (API.GetJewelcraftingTooltipRoot(clonedTooltip) is { } jcRoot)
+        if (API.IsLoaded())
         {
-            API.FillItemContainerTooltip(matchingItem, jcRoot, false);
+            if (API.GetJewelcraftingTooltipRoot(clonedTooltip) is { } jcRoot)
+            {
+                API.FillItemContainerTooltip(matchingItem, jcRoot, false);
+            }
         }
 
 
@@ -147,7 +149,7 @@ static class UITooltipLateUpdatePatch
     {
         if (InventoryGridCreateItemTooltipPatch.ClonedTooltip == null) return;
         RectTransform originalRT = __instance.GetComponent<RectTransform>();
-        RectTransform tooltipRT = (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.ClonedTooltip) ?? InventoryGridCreateItemTooltipPatch.ClonedTooltip.transform).GetComponent<RectTransform>();
+        RectTransform tooltipRT = (API.IsLoaded() ? API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.ClonedTooltip) ?? InventoryGridCreateItemTooltipPatch.ClonedTooltip.transform : InventoryGridCreateItemTooltipPatch.ClonedTooltip.transform).GetComponent<RectTransform>();
         if (UITooltip.m_current != null && !UITooltip.m_tooltip.activeSelf)
         {
             __instance.m_showTimer += Time.deltaTime;
@@ -207,9 +209,16 @@ static class UITooltipLateUpdatePatch
             }
             else
             {
-                if (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.ClonedTooltip) is { } jcRoot)
+                if (API.IsLoaded())
                 {
-                    jcRoot.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width + tooltipRT.rect.width); // + Vector3.up * (originalRT.rect.height / 6.5f + tooltipRT.rect.height / 6.5f);
+                    if (API.GetJewelcraftingTooltipRoot(InventoryGridCreateItemTooltipPatch.ClonedTooltip) is { } jcRoot)
+                    {
+                        jcRoot.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width + tooltipRT.rect.width); // + Vector3.up * (originalRT.rect.height / 6.5f + tooltipRT.rect.height / 6.5f);
+                    }
+                    else
+                    {
+                        tooltipRT.transform.position = ZInput.mousePosition + Vector3.right * (originalRT.rect.width * 4 + tooltipRT.rect.width);
+                    }
                 }
                 else
                 {
