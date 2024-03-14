@@ -142,6 +142,17 @@ public static class UITooltipOnPointerExitPatch
     }
 }
 
+[HarmonyPatch(typeof(UITooltip), nameof(UITooltip.HideTooltip))]
+static class UITooltipHideTooltipPatch
+{
+    static void Prefix(UITooltip __instance)
+    {
+        if (InventoryGridCreateItemTooltipPatch.ClonedTooltip == null) return;
+        Object.Destroy(InventoryGridCreateItemTooltipPatch.ClonedTooltip);
+        InventoryGridCreateItemTooltipPatch.ClonedTooltip = null!;
+    }
+}
+
 [HarmonyPatch(typeof(UITooltip), nameof(UITooltip.LateUpdate))]
 static class UITooltipLateUpdatePatch
 {
@@ -176,7 +187,7 @@ static class UITooltipLateUpdatePatch
 
             if (!(UITooltip.m_current == __instance) || !(UITooltip.m_tooltip != null))
                 return;
-            Vector2 tooltipTranslation = new(originalRT.rect.width * 2 + tooltipRT.rect.width, 0);
+            Vector2 tooltipTranslation = (Vector3.right * (originalRT.rect.width * 4 + tooltipRT.rect.width));
             if (__instance.m_anchor != null)
             {
                 InventoryGridCreateItemTooltipPatch.ClonedTooltip.transform.SetParent(__instance.m_anchor);
@@ -188,7 +199,6 @@ static class UITooltipLateUpdatePatch
             }
             else
             {
-                Player.m_localPlayer.m_nview.GetZDO().GetFloat(ZDOVars.s_stamina, 0.0f);
                 RectTransform? transform = __instance.gameObject.transform as RectTransform;
                 Vector3[] vector3Array = new Vector3[4];
                 Vector3[] fourCornersArray = vector3Array;
