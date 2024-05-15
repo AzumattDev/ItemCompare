@@ -164,9 +164,9 @@ public class Util
         float equippedMovementModifier = equippedItem.m_shared.m_movementModifier;
         float differenceMovementModifier = hoveredMovementModifier - equippedMovementModifier;
 
-        float hoveredBaseItemStaminaModifier = hoveredItem.m_shared.m_baseItemsStaminaModifier;
+        /*float hoveredBaseItemStaminaModifier = hoveredItem.m_shared.m_baseItemsStaminaModifier;
         float equippedBaseItemStaminaModifier = equippedItem.m_shared.m_baseItemsStaminaModifier;
-        float differenceBaseItemStaminaModifier = hoveredBaseItemStaminaModifier - equippedBaseItemStaminaModifier;
+        float differenceBaseItemStaminaModifier = hoveredBaseItemStaminaModifier - equippedBaseItemStaminaModifier;*/
 
         float hoveredParryBonus = hoveredItem.m_shared.m_timedBlockBonus;
         float equippedParryBonus = equippedItem.m_shared.m_timedBlockBonus;
@@ -189,8 +189,8 @@ public class Util
             comparisonText.AppendLine($"$item_eitrregen_modifier: ({(differenceEitrRegenModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceEitrRegenModifier:+0;-0}</color>)");
         if (differenceMovementModifier != 0)
             comparisonText.AppendLine($"$item_movement_modifier: ({(differenceMovementModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceMovementModifier:+0;-0}</color>)");
-        if (differenceBaseItemStaminaModifier != 0)
-            comparisonText.AppendLine($"$base_item_modifier: ({(differenceBaseItemStaminaModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceBaseItemStaminaModifier:+0;-0}</color>)");
+        /*if (differenceBaseItemStaminaModifier != 0)
+            comparisonText.AppendLine($"$base_item_modifier: ({(differenceBaseItemStaminaModifier >= 0 ? "<color=#00FF00>" : "<color=#FF0000>")}{differenceBaseItemStaminaModifier:+0;-0}</color>)");*/
         // Extract status effect tooltips for hovered and equipped items
         string hoveredStatusEffectTooltip = hoveredItem.GetStatusEffectTooltip(hoveredItem.m_quality, Player.m_localPlayer.GetSkillLevel(hoveredItem.m_shared.m_skillType));
         string equippedStatusEffectTooltip = equippedItem.GetStatusEffectTooltip(equippedItem.m_quality, Player.m_localPlayer.GetSkillLevel(equippedItem.m_shared.m_skillType));
