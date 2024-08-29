@@ -33,7 +33,7 @@ namespace ItemCompare
 
         public void Awake()
         {
-            KeyHoldNeeded = config("1 - General", "Key Hold Needed", Toggle.On, "Should they key be held down to compare items? [Default: On]");
+            KeyHoldNeeded = config("1 - General", "Key Hold Needed", Toggle.Off, "Should they key be held down to compare items? [Default: On]");
             HoverKeybind = config("1 - General", "Hover Keybind", new KeyboardShortcut(KeyCode.Z), "Key to hold down while hovering over an item to compare it to the item already equipped. [Default: Z]");
 
             Assembly assembly = Assembly.GetExecutingAssembly();
