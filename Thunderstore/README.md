@@ -11,7 +11,16 @@
 ---
 `Disclaimer: The item linking in the tooltips is not this mod! It's a mod by KG.`
 
-Compatible with Jewelcrafting's toolip.
+## Compatible with Jewelcrafting's toolip.
+
+### Ability to see what uncooked items will turn into, and the stats of that item.
+![](https://i.imgur.com/k20Z0TI.png)
+![](https://i.imgur.com/kaKmMHH.png)
+
+### Compares uncrafted gear to equipped gear in the crafting menu, to see if you should even bother crafting it.
+![](https://i.imgur.com/zmlaY1l.png)
+
+###  Compares equipped items with hovered items in you inventory of the same type.
 
 ![](https://i.imgur.com/N7gQY7g.png)
 

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using HarmonyLib;
+using JetBrains.Annotations;
 using Jewelcrafting;
 using TMPro;
 using UnityEngine;
@@ -97,7 +98,7 @@ static class InventoryGridCreateItemTooltipPatch
     }
 
 
-    private static string GenerateComparisonText(ItemDrop.ItemData hoveredItem)
+    internal static string GenerateComparisonText(ItemDrop.ItemData hoveredItem)
     {
         StringBuilder comparisonText = new();
         Player player = Player.m_localPlayer;
@@ -116,6 +117,48 @@ static class InventoryGridCreateItemTooltipPatch
         }
 
         return Localization.instance.Localize(comparisonText.ToString());
+    }
+}
+
+[HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip), typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float))]
+[HarmonyBefore("Azumatt.BindOnEquip")]
+static class ItemDropItemDataGetTooltipPatch
+{
+    [UsedImplicitly]
+    [HarmonyPriority(Priority.Last)]
+    static void Postfix(ItemDrop.ItemData item, bool crafting, ref string __result)
+    {
+        if (crafting)
+        {
+            string stringToAdd = "";
+            if (item.m_dropPrefab is { } prefab)
+            {
+                ItemDrop.ItemData? equippedItemMatching = Util.FindEquippedItemMatching(item);
+                if (equippedItemMatching != null)
+                {
+                    string colorHexHover = Util.ColorToHexString(API.IsLoaded() ? API.GetSocketableItemColor(item) ?? Color.yellow : Color.yellow);
+                    string colorHex = Util.ColorToHexString(API.IsLoaded() ? API.GetSocketableItemColor(equippedItemMatching) ?? Color.yellow : Color.yellow);
+                    string comparisonHeader = $"{Environment.NewLine}{Environment.NewLine}<color=#{colorHexHover}>{Localization.instance.Localize(item.m_shared.m_name)}</color> vs. <color=#{colorHex}>{Localization.instance.Localize(equippedItemMatching?.m_shared.m_name)} (Equipped)</color>:{Environment.NewLine}{Environment.NewLine}";
+                    stringToAdd += comparisonHeader + InventoryGridCreateItemTooltipPatch.GenerateComparisonText(item);
+                }
+
+                if (GatherConversions.CookingStationConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? stationConversion))
+                {
+                    stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
+                    stringToAdd += Localization.instance.Localize(stationConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
+                    stringToAdd += stationConversion?.m_itemData?.GetTooltip();
+                }
+                
+                if (GatherConversions.FermenterConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? fermentConversion))
+                {
+                    stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
+                    stringToAdd += Localization.instance.Localize(fermentConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
+                    stringToAdd += fermentConversion?.m_itemData?.GetTooltip();
+                }
+
+                __result += stringToAdd;
+            }
+        }
     }
 }
 

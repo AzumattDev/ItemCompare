@@ -117,6 +117,8 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Patches\DescriptionExpander.cs" />
+        <Compile Include="Patches\Gather.cs" />
         <Compile Include="Patches\ItemTooltipPatches.cs" />
         <Compile Include="Plugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -126,6 +128,7 @@
         <Content Include=".gitignore"/>
         <Content Include="environment.props"/>
         <Content Include="ILRepack.targets" />
+        <Content Include="img.png" />
         <Content Include="Libs\JewelcraftingAPI.dll">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
