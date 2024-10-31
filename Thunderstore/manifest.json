@@ -1,6 +1,6 @@
 {
   "name": "ItemCompare",
-  "version_number": "1.0.4",
+  "version_number": "1.0.5",
   "website_url": "https://discord.gg/pdHgy6Bsng",
   "description": "Commissioned mod. Press a hotkey while hovering an item to compare with your currently equipped item.",
   "dependencies": [

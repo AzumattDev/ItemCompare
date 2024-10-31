@@ -120,7 +120,7 @@ static class InventoryGridCreateItemTooltipPatch
     }
 }
 
-[HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip), typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float))]
+[HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip), typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float), typeof(int))]
 [HarmonyBefore("Azumatt.BindOnEquip")]
 static class ItemDropItemDataGetTooltipPatch
 {
@@ -142,18 +142,21 @@ static class ItemDropItemDataGetTooltipPatch
                     stringToAdd += comparisonHeader + InventoryGridCreateItemTooltipPatch.GenerateComparisonText(item);
                 }
 
-                if (GatherConversions.CookingStationConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? stationConversion))
+                if (ItemComparePlugin.ShowConversionsInTooltip.Value == ItemComparePlugin.Toggle.On)
                 {
-                    stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
-                    stringToAdd += Localization.instance.Localize(stationConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
-                    stringToAdd += stationConversion?.m_itemData?.GetTooltip();
-                }
-                
-                if (GatherConversions.FermenterConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? fermentConversion))
-                {
-                    stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
-                    stringToAdd += Localization.instance.Localize(fermentConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
-                    stringToAdd += fermentConversion?.m_itemData?.GetTooltip();
+                    if (GatherConversions.CookingStationConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? stationConversion))
+                    {
+                        stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
+                        stringToAdd += Localization.instance.Localize(stationConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
+                        stringToAdd += stationConversion?.m_itemData?.GetTooltip();
+                    }
+
+                    if (GatherConversions.FermenterConversions.TryGetValue(item.m_shared.m_name, out ItemDrop? fermentConversion))
+                    {
+                        stringToAdd += $"{Environment.NewLine}{Environment.NewLine}Turns into:{Environment.NewLine}";
+                        stringToAdd += Localization.instance.Localize(fermentConversion?.m_itemData?.m_shared.m_name) + Environment.NewLine;
+                        stringToAdd += fermentConversion?.m_itemData?.GetTooltip();
+                    }
                 }
 
                 __result += stringToAdd;

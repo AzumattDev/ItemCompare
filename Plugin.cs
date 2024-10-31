@@ -17,7 +17,7 @@ namespace ItemCompare
     public class ItemComparePlugin : BaseUnityPlugin
     {
         internal const string ModName = "ItemCompare";
-        internal const string ModVersion = "1.0.4";
+        internal const string ModVersion = "1.0.5";
         internal const string Author = "Azumatt";
         private const string ModGUID = $"{Author}.{ModName}";
         private static string ConfigFileName = $"{ModGUID}.cfg";
@@ -35,7 +35,7 @@ namespace ItemCompare
         {
             KeyHoldNeeded = config("1 - General", "Key Hold Needed", Toggle.Off, "Should they key be held down to compare items? [Default: On]");
             HoverKeybind = config("1 - General", "Hover Keybind", new KeyboardShortcut(KeyCode.Z), "Key to hold down while hovering over an item to compare it to the item already equipped. [Default: Z]");
-
+            ShowConversionsInTooltip = config("1 - General", "Show Conversions in Tooltip", Toggle.Off, "Should the conversions of items be shown in the crafting menu description (tooltip)? [Default: Off]");
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
@@ -77,6 +77,7 @@ namespace ItemCompare
 
         internal static ConfigEntry<KeyboardShortcut> HoverKeybind = null!;
         internal static ConfigEntry<Toggle> KeyHoldNeeded = null!;
+        internal static ConfigEntry<Toggle> ShowConversionsInTooltip = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description)
         {
